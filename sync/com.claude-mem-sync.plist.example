@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Example launchd plist for the sync daemon.
+  Instead of editing this manually, run setup-sync-daemon.sh to generate
+  the plist with correct paths for your machine.
+
+  Manual installation:
+    1. Replace /usr/local/bin/node with the output of `which node`
+    2. Replace /path/to/claude-bridge/sync/push-to-remote.js with the actual path
+    3. Replace /Users/yourname with your actual home directory
+    4. Copy to ~/Library/LaunchAgents/com.claude-mem-sync.plist
+    5. Run: launchctl load ~/Library/LaunchAgents/com.claude-mem-sync.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.claude-mem-sync</string>
+    <key>ProgramArguments</key>
+    <array>
+        <!-- Run `which node` to find your node path -->
+        <string>/usr/local/bin/node</string>
+        <!-- Absolute path to push-to-remote.js -->
+        <string>/path/to/claude-bridge/sync/push-to-remote.js</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+    <key>StandardOutPath</key>
+    <!-- Replace with your home directory -->
+    <string>/Users/yourname/.claude-mem/logs/sync.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/yourname/.claude-mem/logs/sync.log</string>
+</dict>
+</plist>

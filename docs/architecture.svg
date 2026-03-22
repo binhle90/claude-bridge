@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" width="900" height="540" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/>
+    </filter>
+    <linearGradient id="serverGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#152a45"/>
+    </linearGradient>
+    <linearGradient id="codeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="desktopGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="proxyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#faf5ff"/>
+      <stop offset="100%" stop-color="#ede9fe"/>
+    </linearGradient>
+    <linearGradient id="webGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fefce8"/>
+      <stop offset="100%" stop-color="#fef9c3"/>
+    </linearGradient>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrowBlueFile" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6366f1"/>
+    </marker>
+    <marker id="arrowTeal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0d9488"/>
+    </marker>
+    <marker id="arrowTealUp" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0d9488"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrowAmber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#d97706"/>
+    </marker>
+    <marker id="arrowAmberUp" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#d97706"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="540" fill="#f1f5f9" rx="8"/>
+
+  <!-- Title -->
+  <text x="450" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#0f172a">Shared Memory Architecture</text>
+
+  <!-- Claude Code Box -->
+  <g filter="url(#shadow)">
+    <rect x="30" y="60" width="220" height="130" rx="10" fill="url(#codeGrad)" stroke="#94a3b8" stroke-width="1.5"/>
+  </g>
+  <rect x="30" y="60" width="220" height="36" rx="10" fill="#3b82f6"/>
+  <rect x="30" y="86" width="220" height="10" fill="#3b82f6"/>
+  <text x="140" y="84" text-anchor="middle" font-size="14" font-weight="600" fill="#ffffff">Claude Code</text>
+  <text x="140" y="116" text-anchor="middle" font-size="12" fill="#475569">Local Machine</text>
+  <text x="140" y="138" text-anchor="middle" font-size="11" font-family="'SF Mono', 'Fira Code', monospace" fill="#64748b">claude-mem worker</text>
+  <text x="140" y="156" text-anchor="middle" font-size="11" font-family="'SF Mono', 'Fira Code', monospace" fill="#64748b">port 37777</text>
+  <text x="140" y="176" text-anchor="middle" font-size="10" fill="#94a3b8">SQLite (local DB)</text>
+
+  <!-- Claude Desktop Box -->
+  <g filter="url(#shadow)">
+    <rect x="340" y="60" width="220" height="100" rx="10" fill="url(#desktopGrad)" stroke="#94a3b8" stroke-width="1.5"/>
+  </g>
+  <rect x="340" y="60" width="220" height="36" rx="10" fill="#8b5cf6"/>
+  <rect x="340" y="86" width="220" height="10" fill="#8b5cf6"/>
+  <text x="450" y="84" text-anchor="middle" font-size="14" font-weight="600" fill="#ffffff">Claude Desktop</text>
+  <text x="450" y="116" text-anchor="middle" font-size="12" fill="#475569">Chat / Cowork</text>
+  <text x="450" y="138" text-anchor="middle" font-size="11" font-family="'SF Mono', 'Fira Code', monospace" fill="#64748b">MCP client (JSON-RPC)</text>
+  <text x="450" y="152" text-anchor="middle" font-size="10" fill="#94a3b8">4 tools via local proxy</text>
+
+  <!-- Claude.ai / Mobile Box -->
+  <g filter="url(#shadow)">
+    <rect x="650" y="60" width="220" height="100" rx="10" fill="url(#webGrad)" stroke="#d97706" stroke-width="1.5"/>
+  </g>
+  <rect x="650" y="60" width="220" height="36" rx="10" fill="#d97706"/>
+  <rect x="650" y="86" width="220" height="10" fill="#d97706"/>
+  <text x="760" y="84" text-anchor="middle" font-size="14" font-weight="600" fill="#ffffff">Claude.ai / Mobile</text>
+  <text x="760" y="116" text-anchor="middle" font-size="12" fill="#475569">Web &amp; iOS / Android</text>
+  <text x="760" y="138" text-anchor="middle" font-size="11" font-family="'SF Mono', 'Fira Code', monospace" fill="#64748b">Remote MCP connector</text>
+  <text x="760" y="152" text-anchor="middle" font-size="10" fill="#94a3b8">OAuth 2.1 + PKCE</text>
+
+  <!-- Local MCP Proxy Box -->
+  <g filter="url(#shadow)">
+    <rect x="360" y="185" width="180" height="52" rx="8" fill="url(#proxyGrad)" stroke="#8b5cf6" stroke-width="1.5"/>
+  </g>
+  <text x="450" y="207" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">Local MCP Proxy</text>
+  <text x="450" y="224" text-anchor="middle" font-size="9" font-family="'SF Mono', 'Fira Code', monospace" fill="#7c3aed">mcp-local-proxy.js</text>
+
+  <!-- Arrow: Desktop -> Proxy (stdio) -->
+  <path d="M 450 160 L 450 183" fill="none" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrowPurple)" stroke-linecap="round"/>
+  <text x="475" y="175" font-size="8" fill="#7c3aed">stdio</text>
+
+  <!-- Remote Server Box -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="340" width="700" height="175" rx="12" fill="url(#serverGrad)" stroke="#1e40af" stroke-width="1.5"/>
+  </g>
+  <text x="450" y="370" text-anchor="middle" font-size="15" font-weight="700" fill="#e2e8f0">Your Remote Server</text>
+  <text x="450" y="388" text-anchor="middle" font-size="11" fill="#94a3b8">Node.js / Port 3010 / HTTPS</text>
+
+  <!-- Server internal components -->
+  <rect x="130" y="404" width="120" height="34" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="190" y="425" text-anchor="middle" font-size="11" font-weight="500" fill="#93c5fd">Express API</text>
+
+  <rect x="270" y="404" width="130" height="34" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="335" y="419" text-anchor="middle" font-size="11" font-weight="500" fill="#93c5fd">SQLite + FTS5</text>
+  <text x="335" y="435" text-anchor="middle" font-size="9" fill="#7dd3fc">+ Embeddings</text>
+
+  <rect x="420" y="404" width="130" height="34" rx="6" fill="#1e3a5f" stroke="#0d9488" stroke-width="1"/>
+  <text x="485" y="425" text-anchor="middle" font-size="11" font-weight="500" fill="#5eead4">MCP Endpoint</text>
+
+  <rect x="570" y="404" width="120" height="34" rx="6" fill="#1e3a5f" stroke="#d97706" stroke-width="1"/>
+  <text x="630" y="425" text-anchor="middle" font-size="11" font-weight="500" fill="#fbbf24">OAuth 2.1</text>
+
+  <!-- Auth labels -->
+  <rect x="190" y="454" width="130" height="24" rx="4" fill="#1e3a5f" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="255" y="470" text-anchor="middle" font-size="10" fill="#fbbf24">Bearer / OAuth Auth</text>
+
+  <rect x="340" y="454" width="130" height="24" rx="4" fill="#1e3a5f" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="405" y="470" text-anchor="middle" font-size="10" fill="#fbbf24">Rate Limit 600/min</text>
+
+  <rect x="490" y="454" width="150" height="24" rx="4" fill="#1e3a5f" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="565" y="470" text-anchor="middle" font-size="10" fill="#fbbf24">Tokens in SQLite</text>
+
+  <!-- Enrichment worker label -->
+  <rect x="650" y="454" width="140" height="24" rx="4" fill="#1e3a5f" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="720" y="470" text-anchor="middle" font-size="10" fill="#c4b5fd">Enrichment Worker</text>
+
+  <!-- Arrow: Code -> Server (DB Sync) -->
+  <path d="M 100 190 L 100 260 Q 100 280 120 290 L 230 335" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrowBlue)" stroke-linecap="round"/>
+
+  <!-- DB Sync label -->
+  <rect x="22" y="244" width="110" height="38" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+  <text x="77" y="260" text-anchor="middle" font-size="10" font-weight="600" fill="#1d4ed8">Sync Daemon</text>
+  <text x="77" y="274" text-anchor="middle" font-size="9" fill="#3b82f6">DB sync (30s)</text>
+
+  <!-- Arrow: Code -> Server (File Sync) -->
+  <path d="M 170 190 L 170 260 Q 170 280 190 290 L 300 335" fill="none" stroke="#6366f1" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrowBlueFile)" stroke-linecap="round"/>
+
+  <!-- File Sync label -->
+  <rect x="160" y="274" width="110" height="38" rx="6" fill="#eef2ff" stroke="#6366f1" stroke-width="1"/>
+  <text x="215" y="290" text-anchor="middle" font-size="10" font-weight="600" fill="#4338ca">File Sync</text>
+  <text x="215" y="304" text-anchor="middle" font-size="9" fill="#6366f1">.md files (5min)</text>
+
+  <!-- Arrow: Proxy -> Server (HTTPS / MCP) -->
+  <path d="M 450 237 L 450 270 Q 450 290 440 298 L 420 335" fill="none" stroke="#0d9488" stroke-width="2.5" marker-end="url(#arrowTeal)" stroke-linecap="round"/>
+
+  <!-- Bidirectional indicator for local MCP -->
+  <path d="M 425 340 L 445 303 Q 455 295 455 275" fill="none" stroke="#0d9488" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrowTealUp)" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- MCP label (local) -->
+  <rect x="470" y="266" width="110" height="38" rx="6" fill="#f0fdfa" stroke="#0d9488" stroke-width="1"/>
+  <text x="525" y="282" text-anchor="middle" font-size="10" font-weight="600" fill="#115e59">MCP Protocol</text>
+  <text x="525" y="296" text-anchor="middle" font-size="9" fill="#0d9488">HTTPS POST /mcp</text>
+
+  <!-- Arrow: Claude.ai -> Server (Direct HTTPS + OAuth) -->
+  <path d="M 760 160 L 760 270 Q 760 300 740 310 L 640 335" fill="none" stroke="#d97706" stroke-width="2.5" marker-end="url(#arrowAmber)" stroke-linecap="round"/>
+
+  <!-- Bidirectional indicator for Claude.ai MCP -->
+  <path d="M 645 340 L 745 315 Q 765 305 765 280" fill="none" stroke="#d97706" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrowAmberUp)" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Claude.ai MCP label -->
+  <rect x="770" y="240" width="115" height="52" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+  <text x="828" y="258" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">Remote MCP</text>
+  <text x="828" y="272" text-anchor="middle" font-size="9" fill="#b45309">HTTPS POST /</text>
+  <text x="828" y="284" text-anchor="middle" font-size="9" fill="#b45309">OAuth 2.1 + SSE</text>
+
+  <!-- HTTPS badge -->
+  <rect x="408" y="305" width="84" height="22" rx="11" fill="#065f46" opacity="0.9"/>
+  <text x="450" y="320" text-anchor="middle" font-size="10" font-weight="600" fill="#d1fae5">HTTPS</text>
+</svg>

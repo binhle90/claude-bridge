@@ -1,0 +1,19 @@
+{
+  "name": "memory",
+  "subdomain": "memory",
+  "port": 3010,
+  "env": {
+    "DATABASE_URL": "file:/app/data/memory.db",
+    "API_KEY": "__GENERATE__",
+    "OAUTH_CLIENT_ID": "__GENERATE__",
+    "OAUTH_CLIENT_SECRET": "__GENERATE__",
+    "OAUTH_PASSWORD": "__SET_OAUTH_PASSWORD__",
+    "NODE_ENV": "production"
+  },
+  "resources": {
+    "memory": "128m",
+    "cpus": "0.25"
+  },
+  "healthCheck": "/api/health",
+  "volumes": ["./data:/app/data"]
+}
