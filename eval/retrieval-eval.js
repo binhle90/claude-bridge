@@ -37,14 +37,23 @@ const EVAL_SET = [
   { id: "C4", query: "lessons learned mistakes", expected_ids: [226, 227, 181, 809], category: "C", notes: "Intent: find retrospective observations" },
   { id: "C5", query: "build versus buy decision", expected_ids: [], category: "C", notes: "May not be synced to remote memory" },
   { id: "C6", query: "what architectural patterns do I reuse across projects", expected_ids: [33, 63, 152, 259, 637], category: "C", notes: "Meta-query about cross-project patterns" },
+
+  // Category D: Filter-Assisted (structured filters improve precision)
+  { id: "D1", query: "embeddings", filters: { obs_type: "decision", after: "30d" }, expected_ids: [2154], category: "D", notes: "obs_type=decision + recency filter narrows to Bedrock decision" },
+  { id: "D2", query: "architecture", filters: { source: "file-sync", obs_type: "reference" }, expected_ids: [658, 659, 681], category: "D", notes: "Synced docs about architecture" },
+  { id: "D3", query: "deployment", filters: { obs_type: "change", after: "7d" }, expected_ids: [], category: "D", notes: "Recent deployment changes — populate after checking" },
 ];
 
-async function search(query, { mode = "keyword", limit = 20, project } = {}) {
+async function search(query, { mode = "keyword", limit = 20, project, filters = {} } = {}) {
   const url = new URL("/api/search", process.env.CLAUDE_MEM_REMOTE_URL);
   url.searchParams.set("query", query);
   url.searchParams.set("limit", String(limit));
   if (mode !== "keyword") url.searchParams.set("mode", mode);
   if (project) url.searchParams.set("project", project);
+  if (filters.obs_type) url.searchParams.set("obs_type", filters.obs_type);
+  if (filters.source) url.searchParams.set("source", filters.source);
+  if (filters.after) url.searchParams.set("after", filters.after);
+  if (filters.before) url.searchParams.set("before", filters.before);
 
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${process.env.CLAUDE_MEM_REMOTE_API_KEY}` },
@@ -83,7 +92,7 @@ async function runEval(modes = ["keyword"]) {
 
     const modeResults = {};
     for (const mode of modes) {
-      const searchResults = await search(testCase.query, { mode, limit: 20 });
+      const searchResults = await search(testCase.query, { mode, limit: 20, filters: testCase.filters });
       const resultIds = searchResults.map((r) => r.id);
 
       modeResults[mode] = {
@@ -109,9 +118,9 @@ function formatReport(results, modes) {
   lines.push(`**Modes tested:** ${modes.join(", ")}`);
   lines.push("");
 
-  for (const cat of ["A", "B", "C"]) {
+  for (const cat of ["A", "B", "C", "D"]) {
     const catResults = results.filter((r) => r.category === cat && !r.skipped);
-    const catLabel = { A: "Keyword-Friendly", B: "Synonym/Paraphrase", C: "Conceptual/Intent" }[cat];
+    const catLabel = { A: "Keyword-Friendly", B: "Synonym/Paraphrase", C: "Conceptual/Intent", D: "Filter-Assisted" }[cat];
     lines.push(`## Category ${cat}: ${catLabel} (${catResults.length} queries)`);
     lines.push("");
 

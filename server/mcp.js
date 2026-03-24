@@ -7,11 +7,18 @@ const TOOL_DEFINITIONS = [
   {
     name: "search",
     description:
-      "Full-text and semantic search across observations and sessions.",
+      "Full-text and semantic search across observations and sessions. " +
+      "Supports structured filters to narrow results before search. " +
+      "Filters compose with AND logic — all specified filters must match.",
     inputSchema: {
       type: "object",
       properties: {
-        query: { type: "string", description: "Search query string" },
+        query: {
+          type: "string",
+          description: "Search query string. Keep this focused on the topic — " +
+            "use the filter parameters below for type, source, and time constraints " +
+            "instead of packing them into the query.",
+        },
         limit: {
           type: "number",
           description: "Maximum number of results (default 20, max 100)",
@@ -26,6 +33,44 @@ const TOOL_DEFINITIONS = [
           default: "hybrid",
           description:
             "keyword: FTS5 only. semantic: embedding similarity. hybrid: both, merged via RRF. Default is hybrid when embeddings are configured, keyword otherwise.",
+        },
+        obs_type: {
+          type: "string",
+          enum: [
+            "plan", "decision", "discovery", "change",
+            "reference", "refactor", "bugfix", "feature",
+          ],
+          description:
+            "'decision' for conclusions reached, final calls, go/no-go judgments. " +
+            "'plan' for implementation designs, roadmaps, ordered steps. " +
+            "'discovery' for findings, insights, non-obvious results. " +
+            "'reference' for synced documents and specs. " +
+            "'change' for code or config modifications. " +
+            "'bugfix' for bug investigations and fixes. " +
+            "'refactor' for code restructuring. " +
+            "'feature' for new capability additions and enhancements.",
+        },
+        source: {
+          type: "string",
+          enum: ["claude-code", "claude-desktop", "file-sync"],
+          description:
+            "Filter by which client created the observation. " +
+            "'claude-code' for coding session observations. " +
+            "'claude-desktop' for brainstorming and planning saves. " +
+            "'file-sync' for auto-synced project documentation.",
+        },
+        after: {
+          type: "string",
+          description:
+            "Only return results created after this time. " +
+            "Accepts ISO 8601 timestamps (e.g. '2026-03-16T00:00:00Z') " +
+            "or relative shorthand: '7d' (7 days ago), '24h' (24 hours ago), '30d' (30 days ago).",
+        },
+        before: {
+          type: "string",
+          description:
+            "Only return results created before this time. " +
+            "Same format as 'after'.",
         },
       },
       required: ["query"],
@@ -138,6 +183,12 @@ const TOOL_DEFINITIONS = [
 
 async function handleSearch(db, args, { embeddingProvider } = {}) {
   const { query, project, mode: searchMode } = args;
+  const filters = {
+    obs_type: args.obs_type,
+    source: args.source,
+    after: args.after,
+    before: args.before,
+  };
   const hasEmbeddings = embeddingProvider && embeddingProvider.constructor.name !== "NoopEmbeddings";
   const mode = searchMode || (hasEmbeddings ? "hybrid" : "keyword");
   const limit = Math.min(parseInt(args.limit) || 20, 100);
@@ -149,19 +200,19 @@ async function handleSearch(db, args, { embeddingProvider } = {}) {
   let results;
 
   if (mode === "keyword") {
-    results = keywordSearch(db, query, { project, limit });
+    results = keywordSearch(db, query, { project, filters, limit });
   } else if (mode === "semantic") {
     if (!hasEmbeddings) {
       return { content: [{ type: "text", text: JSON.stringify({ error: "Semantic search not configured. Set EMBEDDING_PROVIDER.", results: [], total: 0 }) }] };
     }
-    results = await semanticSearch(db, embeddingProvider, query, { limit, project });
+    results = await semanticSearch(db, embeddingProvider, query, { limit, project, filters });
   } else if (mode === "hybrid") {
     if (!embeddingProvider || embeddingProvider.constructor.name === "NoopEmbeddings") {
-      results = keywordSearch(db, query, { project, limit });
+      results = keywordSearch(db, query, { project, filters, limit });
     } else {
       const [ftsResults, semResults] = await Promise.all([
-        Promise.resolve(keywordSearch(db, query, { project, limit: 50 })),
-        semanticSearch(db, embeddingProvider, query, { limit: 50, project }),
+        Promise.resolve(keywordSearch(db, query, { project, filters, limit: 50 })),
+        semanticSearch(db, embeddingProvider, query, { limit: 50, project, filters }),
       ]);
       results = mergeRRF(ftsResults, semResults).slice(0, limit);
     }

@@ -1,23 +1,31 @@
 const { semanticSearch, mergeRRF } = require("../search-semantic");
+const { buildFilterClauses } = require("../search-filters");
 
 function searchRoutes(router, db) {
   router.get("/api/search", async (req, res) => {
-    const { query, project, type, obs_type, mode: searchMode } = req.query;
+    const { query, project, type, mode: searchMode } = req.query;
     const embeddingProvider = req.app.locals.embeddingProvider;
     const hasEmbeddings = embeddingProvider && embeddingProvider.constructor.name !== "NoopEmbeddings";
     const mode = searchMode || (hasEmbeddings ? "hybrid" : "keyword");
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const offset = parseInt(req.query.offset) || 0;
 
+    // Build structured filters from query params
+    const filters = {
+      obs_type: req.query.obs_type,
+      source: req.query.source,
+      after: req.query.after,
+      before: req.query.before,
+    };
+
     if (!query || !query.trim()) {
       return res.status(400).json({ error: "query parameter is required" });
     }
 
     if (mode === "semantic" || mode === "hybrid") {
-      const embeddingProvider = req.app.locals.embeddingProvider;
       if (!embeddingProvider || embeddingProvider.constructor.name === "NoopEmbeddings") {
         return res.json({
-          results: mode === "hybrid" ? keywordSearch(db, query, { project, type, obs_type, limit }) : [],
+          results: mode === "hybrid" ? keywordSearch(db, query, { project, type, filters, limit }) : [],
           total: 0,
           error: "Semantic search not configured. Set EMBEDDING_PROVIDER.",
         });
@@ -28,13 +36,13 @@ function searchRoutes(router, db) {
       let results;
 
       if (mode === "keyword") {
-        results = keywordSearch(db, query, { project, type, obs_type, limit: limit + offset });
+        results = keywordSearch(db, query, { project, type, filters, limit: limit + offset });
       } else if (mode === "semantic") {
-        results = await semanticSearch(db, req.app.locals.embeddingProvider, query, { limit: limit + offset, project });
+        results = await semanticSearch(db, req.app.locals.embeddingProvider, query, { limit: limit + offset, project, filters });
       } else if (mode === "hybrid") {
         const [ftsResults, semResults] = await Promise.all([
-          Promise.resolve(keywordSearch(db, query, { project, type, obs_type, limit: 50 })),
-          semanticSearch(db, req.app.locals.embeddingProvider, query, { limit: 50, project }),
+          Promise.resolve(keywordSearch(db, query, { project, type, filters, limit: 50 })),
+          semanticSearch(db, req.app.locals.embeddingProvider, query, { limit: 50, project, filters }),
         ]);
         results = mergeRRF(ftsResults, semResults);
       } else {
@@ -50,22 +58,30 @@ function searchRoutes(router, db) {
   });
 }
 
-function keywordSearch(db, query, { project, type, obs_type, limit = 20 } = {}) {
+function keywordSearch(db, query, { project, type, filters = {}, limit = 20 } = {}) {
   const results = [];
 
   if (!type || type === "observations") {
+    // Build observation filter clauses
+    const obsFilters = buildFilterClauses(filters, "o");
+    if (project) {
+      obsFilters.clauses.push("o.project = ?");
+      obsFilters.params.push(project);
+    }
+
+    const obsWhere = obsFilters.clauses.length > 0
+      ? " AND " + obsFilters.clauses.join(" AND ")
+      : "";
+
     try {
-      let sql = `
+      const sql = `
         SELECT o.*, snippet(observations_fts, -1, '', '', '...', 40) as fts_snippet
         FROM observations_fts fts
         JOIN observations o ON o.id = fts.rowid
         WHERE observations_fts MATCH ?
+        ${obsWhere}
       `;
-      const params = [query];
-      if (project) { sql += " AND o.project = ?"; params.push(project); }
-      if (obs_type) { sql += " AND o.type = ?"; params.push(obs_type); }
-
-      const rows = db.prepare(sql).all(...params);
+      const rows = db.prepare(sql).all(query, ...obsFilters.params);
       for (const row of rows) {
         results.push({
           id: row.id,
@@ -82,18 +98,30 @@ function keywordSearch(db, query, { project, type, obs_type, limit = 20 } = {}) 
     } catch { /* Invalid FTS5 query syntax */ }
   }
 
-  if (!type || type === "sessions") {
+  // Skip session search if obs_type filter is set (sessions don't have obs_type)
+  if ((!type || type === "sessions") && !filters.obs_type) {
+    const sessionFilters = buildFilterClauses(
+      { source: filters.source, after: filters.after, before: filters.before },
+      "ss"
+    );
+    if (project) {
+      sessionFilters.clauses.push("ss.project = ?");
+      sessionFilters.params.push(project);
+    }
+
+    const sessionWhere = sessionFilters.clauses.length > 0
+      ? " AND " + sessionFilters.clauses.join(" AND ")
+      : "";
+
     try {
-      let sql = `
+      const sql = `
         SELECT ss.*, snippet(session_summaries_fts, -1, '', '', '...', 40) as fts_snippet
         FROM session_summaries_fts fts
         JOIN session_summaries ss ON ss.id = fts.rowid
         WHERE session_summaries_fts MATCH ?
+        ${sessionWhere}
       `;
-      const params = [query];
-      if (project) { sql += " AND ss.project = ?"; params.push(project); }
-
-      const rows = db.prepare(sql).all(...params);
+      const rows = db.prepare(sql).all(query, ...sessionFilters.params);
       for (const row of rows) {
         results.push({
           id: row.id,

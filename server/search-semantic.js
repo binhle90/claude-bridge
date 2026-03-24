@@ -5,6 +5,7 @@
  * the BLOB is a Node.js Buffer whose underlying ArrayBuffer may not be 4-byte aligned.
  * We copy into a fresh Buffer before wrapping in Float32Array to guarantee alignment.
  */
+const { buildFilterClauses } = require("./search-filters");
 
 /**
  * Compute cosine similarity between two Float32Arrays.
@@ -70,7 +71,7 @@ function mergeRRF(ftsResults, semanticResults, k = 60) {
  * @param {{ limit?: number, project?: string }} [opts]
  * @returns {Promise<Array>}
  */
-async function semanticSearch(db, embeddingProvider, queryText, { limit = 20, project } = {}) {
+async function semanticSearch(db, embeddingProvider, queryText, { limit = 20, project, filters = {} } = {}) {
   const [queryVec] = await embeddingProvider.embed([queryText]);
   if (!queryVec) throw new Error("Semantic search not configured. Set EMBEDDING_PROVIDER.");
 
@@ -78,15 +79,25 @@ async function semanticSearch(db, embeddingProvider, queryText, { limit = 20, pr
 
   // --- Observations ---
   {
+    const obsFilters = buildFilterClauses(filters, "o");
+    if (project) {
+      obsFilters.clauses.push("o.project = ?");
+      obsFilters.params.push(project);
+    }
+
+    const where = obsFilters.clauses.length > 0
+      ? "WHERE " + obsFilters.clauses.join(" AND ")
+      : "";
+
     const sql = `
       SELECT o.id, o.type, o.title, o.project, o.narrative, o.abstract,
              o.created_at_epoch, o.source,
              e.embedding, e.dimensions
       FROM observations o
       JOIN observation_embeddings e ON e.observation_id = o.id
-      ${project ? "WHERE o.project = ?" : ""}
+      ${where}
     `;
-    const rows = db.prepare(sql).all(...(project ? [project] : []));
+    const rows = db.prepare(sql).all(...obsFilters.params);
 
     for (const row of rows) {
       // Copy BLOB into a fresh, aligned Buffer before creating Float32Array
@@ -109,17 +120,30 @@ async function semanticSearch(db, embeddingProvider, queryText, { limit = 20, pr
     }
   }
 
-  // --- Session summaries ---
-  {
+  // --- Session summaries (skip if obs_type filter is set) ---
+  if (!filters.obs_type) {
+    const sessionFilters = buildFilterClauses(
+      { source: filters.source, after: filters.after, before: filters.before },
+      "ss"
+    );
+    if (project) {
+      sessionFilters.clauses.push("ss.project = ?");
+      sessionFilters.params.push(project);
+    }
+
+    const where = sessionFilters.clauses.length > 0
+      ? "WHERE " + sessionFilters.clauses.join(" AND ")
+      : "";
+
     const sql = `
       SELECT ss.id, ss.project, ss.request, ss.abstract,
              ss.created_at_epoch, ss.source,
              e.embedding, e.dimensions
       FROM session_summaries ss
       JOIN session_embeddings e ON e.session_id = ss.id
-      ${project ? "WHERE ss.project = ?" : ""}
+      ${where}
     `;
-    const rows = db.prepare(sql).all(...(project ? [project] : []));
+    const rows = db.prepare(sql).all(...sessionFilters.params);
 
     for (const row of rows) {
       const aligned = Buffer.allocUnsafe(row.embedding.length);

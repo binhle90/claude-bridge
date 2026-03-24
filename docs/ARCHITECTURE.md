@@ -190,7 +190,7 @@ Claude Desktop connects to `POST /mcp` (via the local stdio proxy) using JSON-RP
 
 | Tool | Description |
 |------|-------------|
-| `search` | Search across observations and sessions. Params: `query` (required), `limit`, `project`, `mode` (`keyword`/`semantic`/`hybrid`, default `keyword`). Keyword uses FTS5, semantic uses embedding cosine similarity, hybrid merges both via Reciprocal Rank Fusion. Results include `abstract` field (one-line AI-generated summary, null if not yet generated). |
+| `search` | Search across observations and sessions. Params: `query` (required), `limit`, `project`, `mode` (`keyword`/`semantic`/`hybrid`, default `hybrid`). Supports structured filters: `obs_type` (enum: `plan`/`decision`/`discovery`/`change`/`reference`/`refactor`/`bugfix`/`feature`), `source` (enum: `claude-code`/`claude-desktop`/`file-sync`), `after`/`before` (ISO 8601 or relative shorthand like `7d`/`24h`). All filters compose with AND logic and apply as SQL WHERE clauses before search. When `obs_type` is set, session results are excluded. Results include `abstract` field (one-line AI-generated summary, null if not yet generated). |
 | `timeline` | Chronological timeline of all record types. Supports anchor-based navigation (observation ID, `S{id}` for sessions, ISO timestamp) and FTS-based anchor finding. Params: `anchor`, `query`, `depth_before`, `depth_after`, `project`. |
 | `get_observations` | Batch fetch observations by ID array. For `type: "plan"` observations from Desktop, columns are remapped to semantic names (`summary`, `decisions`, `plan`, etc.). Params: `ids` (required). |
 | `save_memory` | Save a memory with simple text or structured fields. See [Structured Saves](#structured-saves) below. |
@@ -329,7 +329,7 @@ All `/api/*` routes (except health) require `Authorization: Bearer <API_KEY>` he
 | `POST` | `/api/sessions` | Create a session summary. Requires `source`. Returns `{ id, success }`. 409 on duplicate. |
 | `POST` | `/api/prompts` | Create a user prompt. Requires `source`. Returns `{ id, success }`. 409 on duplicate. |
 | `POST` | `/api/observations/batch` | Batch fetch observations by ID array. Body: `{ ids: [1, 2, 3] }`. |
-| `GET` | `/api/search` | Search with modes. Query params: `query` (required), `mode` (`keyword`/`semantic`/`hybrid`), `project`, `type`, `obs_type`, `limit`, `offset`. |
+| `GET` | `/api/search` | Search with modes. Query params: `query` (required), `mode` (`keyword`/`semantic`/`hybrid`), `project`, `type`, `obs_type`, `source`, `after`, `before`, `limit`, `offset`. Filters compose with AND logic. `after`/`before` accept ISO 8601 or relative shorthand (`7d`, `24h`, `30d`). |
 | `POST` | `/api/admin/backfill` | Enqueue all observations and sessions missing embeddings/abstracts for background processing. |
 | `GET` | `/api/timeline` | Chronological timeline. Query params: `anchor`, `query`, `depth_before`, `depth_after`, `project`. |
 | `GET` | `/api/context` | Markdown context dump for specified projects. Query params: `projects` (comma-separated, required). Returns recent sessions and observations formatted as markdown. |

@@ -278,4 +278,71 @@ describe("MCP Endpoint", () => {
     assert.ok(parsed.success);
     assert.strictEqual(typeof parsed.id, "number");
   });
+
+  it("POST /mcp tools/list search tool includes filter parameters", async () => {
+    const res = await request(baseUrl, "POST", "/mcp", {
+      body: jsonrpc("tools/list", {}, 20),
+      headers: AUTH,
+    });
+    assert.strictEqual(res.status, 200);
+    const searchTool = res.body.result.tools.find(t => t.name === "search");
+    assert.ok(searchTool, "search tool should exist");
+
+    const props = searchTool.inputSchema.properties;
+    assert.ok(props.obs_type, "search tool should have obs_type parameter");
+    assert.ok(props.source, "search tool should have source parameter");
+    assert.ok(props.after, "search tool should have after parameter");
+    assert.ok(props.before, "search tool should have before parameter");
+
+    // Verify obs_type has enum values
+    assert.ok(Array.isArray(props.obs_type.enum));
+    assert.ok(props.obs_type.enum.includes("decision"));
+    assert.ok(props.obs_type.enum.includes("plan"));
+    assert.ok(props.obs_type.enum.includes("discovery"));
+
+    // Verify source has enum values
+    assert.ok(Array.isArray(props.source.enum));
+    assert.ok(props.source.enum.includes("claude-code"));
+    assert.ok(props.source.enum.includes("claude-desktop"));
+    assert.ok(props.source.enum.includes("file-sync"));
+  });
+
+  it("POST /mcp tools/call search with obs_type filter works", async () => {
+    // Seed a decision observation
+    await request(baseUrl, "POST", "/api/observations", {
+      body: {
+        source: "claude-code",
+        source_id: 802,
+        project: "my-app",
+        type: "decision",
+        title: "MCP auth decision",
+        narrative: "Decided to use Bearer token auth for MCP endpoints",
+        text: "Bearer tokens are simpler than OAuth for server-to-server",
+        created_at: "2026-01-01T11:00:00Z",
+        created_at_epoch: 1767265200000,
+      },
+      headers: AUTH,
+    });
+
+    const res = await request(baseUrl, "POST", "/mcp", {
+      body: jsonrpc(
+        "tools/call",
+        { name: "search", arguments: { query: "MCP", obs_type: "decision" } },
+        21
+      ),
+      headers: AUTH,
+    });
+    assert.strictEqual(res.status, 200);
+    const parsed = JSON.parse(res.body.result.content[0].text);
+    assert.ok(Array.isArray(parsed.results));
+    // All observation results should be decisions
+    for (const r of parsed.results) {
+      if (r.type === "observation") {
+        assert.strictEqual(r.obs_type, "decision");
+      }
+    }
+    // No sessions should appear
+    const sessions = parsed.results.filter(r => r.type === "session");
+    assert.strictEqual(sessions.length, 0);
+  });
 });

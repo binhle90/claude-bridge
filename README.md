@@ -239,7 +239,7 @@ All require `Authorization: Bearer <API_KEY>` header. Rate limited to 600 req/mi
 | `POST` | `/api/sessions` | Create a session summary |
 | `POST` | `/api/prompts` | Create a user prompt |
 | `POST` | `/api/observations/batch` | Batch fetch observations by ID array |
-| `GET` | `/api/search` | Search with `mode=keyword\|semantic\|hybrid` (`query` required) |
+| `GET` | `/api/search` | Search with `mode=keyword\|semantic\|hybrid`. Filters: `query` (required), `obs_type`, `source`, `after`, `before`, `project`, `limit`, `offset` |
 | `POST` | `/api/admin/backfill` | Enqueue all records for embedding + abstract generation |
 | `GET` | `/api/timeline` | Chronological timeline with anchor navigation |
 | `GET` | `/api/context` | Markdown context dump for projects |
@@ -250,7 +250,7 @@ All require `Authorization: Bearer <API_KEY>` header. Rate limited to 600 req/mi
 
 | Tool | Description |
 |------|-------------|
-| `search` | Search across observations and sessions. Supports `mode`: `keyword` (FTS5, default), `semantic` (embedding similarity), `hybrid` (both, merged via RRF) |
+| `search` | Search across observations and sessions. Supports `mode`: `keyword` (FTS5), `semantic` (embedding similarity), `hybrid` (both, merged via RRF, default). Structured filters: `obs_type`, `source`, `after`/`before` (ISO 8601 or relative like `7d`). Filters compose with AND. |
 | `timeline` | Chronological timeline with anchor-based navigation |
 | `get_observations` | Batch fetch observations by ID (structured plans get semantic field names) |
 | `save_memory` | Save a memory — simple text or structured (summary, decisions, plan, etc.) |
@@ -390,6 +390,7 @@ launchctl unload ~/Library/LaunchAgents/com.claude-mem-sync.plist
 │   ├── abstracts.js          # Abstract generator (one-line summaries)
 │   ├── enrichment-worker.js  # Background queue for embeddings + abstracts
 │   ├── search-semantic.js    # Cosine similarity, RRF merge, semantic search
+│   ├── search-filters.js    # Structured filter parsing (obs_type, source, after, before)
 │   ├── middleware/auth.js    # Bearer token + OAuth token auth
 │   └── routes/
 │       ├── search.js         # GET /api/search (keyword/semantic/hybrid)
@@ -402,7 +403,7 @@ launchctl unload ~/Library/LaunchAgents/com.claude-mem-sync.plist
 │   ├── mcp-local-proxy.js   # MCP stdio proxy for Claude Desktop
 │   ├── setup-sync-daemon.sh # Auto-generates and installs launchd plist
 │   └── com.claude-mem-sync.plist.example
-├── test/                    # Test suite (node:test, 94 tests)
+├── test/                    # Test suite (node:test, 113 tests)
 ├── eval/                    # Retrieval quality evaluation
 │   ├── retrieval-eval.js    # Ground-truth query set, Recall@K, MRR, Precision@K
 │   └── latency-bench.js     # Keyword search p50/p95/p99 latency benchmark

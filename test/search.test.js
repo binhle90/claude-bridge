@@ -363,4 +363,76 @@ describe("Search, Timeline, Batch, Context", () => {
     // Without EMBEDDING_PROVIDER, hybrid should still return keyword results
     assert.ok(res.body.error || res.body.results !== undefined);
   });
+
+  // --- Search filters ---
+  it("GET /api/search filters by obs_type", async () => {
+    const res = await request(baseUrl, "GET",
+      "/api/search?query=FTS5&obs_type=discovery",
+      { headers: AUTH });
+    assert.strictEqual(res.status, 200);
+    for (const r of res.body.results) {
+      if (r.type === "observation") {
+        assert.strictEqual(r.obs_type, "discovery");
+      }
+    }
+    // Should not return sessions when obs_type filter is set
+    const sessions = res.body.results.filter(r => r.type === "session");
+    assert.strictEqual(sessions.length, 0);
+  });
+
+  it("GET /api/search filters by source", async () => {
+    const res = await request(baseUrl, "GET",
+      "/api/search?query=FTS5&source=claude-code",
+      { headers: AUTH });
+    assert.strictEqual(res.status, 200);
+    for (const r of res.body.results) {
+      assert.strictEqual(r.source, "claude-code");
+    }
+  });
+
+  it("GET /api/search filters by after (relative)", async () => {
+    // Seeded data has epoch 1767229200000 (2026-01-01T01:00:00Z)
+    // "1d" = 1 day ago — seeded data is months old so should be excluded
+    const res = await request(baseUrl, "GET",
+      "/api/search?query=FTS5&after=1d",
+      { headers: AUTH });
+    assert.strictEqual(res.status, 200);
+    // All seeded data is from months ago, so no results should match
+    assert.strictEqual(res.body.results.length, 0);
+  });
+
+  it("GET /api/search filters by before (ISO)", async () => {
+    // All seeded data is from 2026-01-01 — use cutoff of 2026-01-01T01:30:00Z
+    const cutoff = new Date("2026-01-01T01:30:00Z").getTime();
+    const res = await request(baseUrl, "GET",
+      "/api/search?query=indexing&before=2026-01-01T01:30:00Z",
+      { headers: AUTH });
+    assert.strictEqual(res.status, 200);
+    for (const r of res.body.results) {
+      assert.ok(r.created_at_epoch < cutoff);
+    }
+  });
+
+  it("GET /api/search composes multiple filters with AND", async () => {
+    const res = await request(baseUrl, "GET",
+      "/api/search?query=FTS5&obs_type=discovery&project=alpha",
+      { headers: AUTH });
+    assert.strictEqual(res.status, 200);
+    for (const r of res.body.results) {
+      assert.strictEqual(r.project, "alpha");
+      if (r.type === "observation") {
+        assert.strictEqual(r.obs_type, "discovery");
+      }
+    }
+  });
+
+  it("GET /api/search with obs_type excludes session results", async () => {
+    const res = await request(baseUrl, "GET",
+      "/api/search?query=database&obs_type=discovery",
+      { headers: AUTH });
+    assert.strictEqual(res.status, 200);
+    for (const r of res.body.results) {
+      assert.notStrictEqual(r.type, "session");
+    }
+  });
 });
