@@ -173,10 +173,7 @@ const TOOL_DEFINITIONS = [
           description: 'Project name (defaults to "desktop")',
         },
       },
-      oneOf: [
-        { required: ["text"] },
-        { required: ["title", "summary"] },
-      ],
+      required: [],
     },
   },
 ];
